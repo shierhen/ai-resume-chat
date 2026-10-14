@@ -1,0 +1,109 @@
+/**
+ * 设计 token（Design Tokens）—— 全站唯一的颜色/尺寸/字体来源。
+ *
+ * 核心思路：组件里**永远不写死颜色**，只写 var(--xxx)。
+ * 于是"换主题"就退化成"换一组变量值"，不需要改任何组件代码。
+ * 这就是所谓「主题切换的本质是变量重绑定」。
+ *
+ * 颜色取值参考 DeepSeek 官网：大面积留白 + 中性灰底 + 品牌蓝 #4D6BFE 点缀。
+ */
+
+/* ---------------------------------------------------- 亮色（默认） */
+:root {
+  /* 告诉浏览器当前配色方案：原生滚动条、表单控件、自动填充会跟着变 */
+  color-scheme: light;
+
+  /* 品牌色 */
+  --brand: #4d6bfe;
+  --brand-hover: #3d59e8;
+  --brand-active: #3349c9;
+  /* 品牌色的低透明度版本，用于选中/hover 背景 */
+  --brand-soft: rgba(77, 107, 254, 0.1);
+  --text-on-brand: #ffffff;
+
+  /* 背景层级：从"最深"到"最浅" */
+  --bg-app: #ffffff; /* 页面底色 */
+  --bg-subtle: #f4f5f7; /* 次级底：输入框、用户气泡、卡片 */
+  --bg-elevated: #ffffff; /* 浮层：弹窗、下拉 */
+  --bg-hover: #e9ebef; /* hover 态 */
+
+  /* 文本层级 */
+  --text-primary: #1b1c1f; /* 正文：对比度 > 15:1 */
+  --text-secondary: #61666d; /* 次要说明：仍 > 4.5:1，满足 WCAG AA */
+  --text-tertiary: #8a9099; /* 占位符/时间戳（非关键信息） */
+
+  /* 描边与阴影 */
+  --border: #e7e9ec;
+  --border-strong: #d6d9de;
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.04);
+  --shadow-md: 0 6px 20px rgba(16, 24, 40, 0.08);
+
+  /* 气泡 */
+  --bubble-user-bg: #eef2ff;
+  --bubble-user-text: #1b1c1f;
+  --bubble-assistant-bg: transparent; /* 助手消息不用气泡，直接排文字（同 DeepSeek） */
+
+  /* 圆角 */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-pill: 999px;
+
+  /* 间距刻度（4 的倍数，方便对齐） */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  /* 字体 */
+  --font-sans:
+    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+
+  /* 布局尺寸 */
+  --content-max: 768px; /* 对话区最大宽度：太宽了眼睛要来回扫，阅读体验差 */
+  --header-height: 56px;
+
+  /* 动效 */
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* ---------------------------------------------------- 暗色 */
+/*
+ * 只需要覆盖"值"，键名与上面完全一致。
+ * 选择器用 html.dark（而不是 body.dark），因为：
+ *  1. Element Plus 的暗色变量挂在 html.dark 上；
+ *  2. 弹窗/滚动条等挂在 html 上的原生元素也要跟着变。
+ */
+html.dark {
+  color-scheme: dark;
+
+  --brand: #6b83ff; /* 暗底上把品牌色提亮，保证对比度 */
+  --brand-hover: #8199ff;
+  --brand-active: #5872f0;
+  --brand-soft: rgba(107, 131, 255, 0.16);
+  --text-on-brand: #0f1115;
+
+  /* 暗色不要用纯黑 #000：纯黑+高亮文字会产生"光晕"和过大对比，久看疲劳 */
+  --bg-app: #191a1c;
+  --bg-subtle: #24262a;
+  --bg-elevated: #202225;
+  --bg-hover: #2d3035;
+
+  --text-primary: #e9ebee;
+  --text-secondary: #a3a9b2;
+  --text-tertiary: #7c828b;
+
+  --border: #2f3237;
+  --border-strong: #3e4248;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.45);
+
+  --bubble-user-bg: #2a2f42;
+  --bubble-user-text: #e9ebee;
+}

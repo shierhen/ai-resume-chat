@@ -1,0 +1,52 @@
+/**
+ * 把 Element Plus 的变量"接到"我们自己的 token 上。
+ *
+ * 为什么需要这一步？
+ * Element Plus 的主色不是单个 --el-color-primary，而是一整套派生色阶：
+ *   light-3 / light-5 / light-7 / light-8 / light-9（越来越浅）
+ *   dark-2（更深，用于 active 态）
+ * 默认这些是蓝色 #409eff 系。如果我们只改 primary，hover/disabled 还是原来的蓝，
+ * 页面就会出现两种蓝 —— 这是接入 UI 库时最典型的"颜色不统一"问题。
+ *
+ * 做法：主色指向 var(--brand)，再手写几档派生色（明暗两套各一份）。
+ */
+
+:root {
+  /* 组件基础参数 */
+  --el-font-family: var(--font-sans);
+  --el-border-radius-base: var(--radius-sm);
+  --el-text-color-primary: var(--text-primary);
+  --el-text-color-regular: var(--text-secondary);
+  --el-border-color: var(--border);
+  --el-fill-color-blank: var(--bg-app);
+
+  /* 品牌色阶（亮色） */
+  --el-color-primary: var(--brand);
+  --el-color-primary-light-3: #7d92ff;
+  --el-color-primary-light-5: #a3b2ff;
+  --el-color-primary-light-7: #c9d2ff;
+  --el-color-primary-light-8: #dde3ff;
+  --el-color-primary-light-9: #eef2ff;
+  --el-color-primary-dark-2: var(--brand-hover);
+}
+
+html.dark {
+  --el-text-color-primary: var(--text-primary);
+  --el-text-color-regular: var(--text-secondary);
+  --el-border-color: var(--border);
+  --el-fill-color-blank: var(--bg-app);
+  --el-bg-color: var(--bg-elevated);
+  --el-bg-color-overlay: var(--bg-elevated);
+
+  /*
+   * 暗色环境下，EP 的 light-3 语义是"比主色浅、用于 hover 背景"，
+   * 但浅色在暗底上会刺眼，所以这里改成"更暗"的一档。
+   */
+  --el-color-primary: var(--brand);
+  --el-color-primary-light-3: #46569e;
+  --el-color-primary-light-5: #333e73;
+  --el-color-primary-light-7: #262d52;
+  --el-color-primary-light-8: #1f2544;
+  --el-color-primary-light-9: #1a1e33;
+  --el-color-primary-dark-2: var(--brand-hover);
+}

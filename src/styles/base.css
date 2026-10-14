@@ -1,0 +1,81 @@
+/**
+ * 全局基础样式：重置 + 全局排版 + 滚动条 + 无障碍。
+ * 只放"全局性"的东西，组件各自的样式写在 .vue 的 <style scoped> 里。
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box; /* 让 width 包含 padding/border，布局计算才不会"差一点" */
+}
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 16px; /* 移动端 Safari 中 < 16px 的输入框会自动放大页面，务必 >= 16px */
+  line-height: 1.6;
+  color: var(--text-primary);
+  background-color: var(--bg-app);
+  /* 主题切换时颜色平滑过渡，避免"闪一下"（配合 prefers-reduced-motion 见下方） */
+  transition:
+    background-color var(--dur-base) var(--ease-out),
+    color var(--dur-base) var(--ease-out);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+figure {
+  margin: 0;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+/* 键盘可达性：只有键盘聚焦时（:focus-visible）才画焦点环，鼠标点击不会出现 */
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* 滚动条：默认的太粗糙，收窄并跟随主题 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: var(--border-strong);
+  border-radius: var(--radius-pill);
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* 尊重系统的"减少动态效果"设置：眩晕用户群体必备，也是 WCAG 要求 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

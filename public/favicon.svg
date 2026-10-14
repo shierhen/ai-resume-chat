@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!--
+    站点图标（favicon）
+    复用 AppHeader.vue 的品牌标记：渐变圆角底 + 白色对话气泡 + 三个品牌色圆点。
+    为什么用 SVG：
+      1. 矢量，16px 标签页到 180px 桌面图标都清晰；
+      2. 单文件、几百字节，无额外请求成本；
+      3. 不需要为不同尺寸准备多份 PNG。
+    注意：这里**全部用呈现属性（fill=...）而不是 class + <style>**。
+    浏览器渲染 favicon 时对内部样式表的支持并不一致，属性写法最稳。
+  -->
+  <defs>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4d6bfe" />
+      <stop offset="100%" stop-color="#8b5cf6" />
+    </linearGradient>
+  </defs>
+
+  <!-- 圆角方形底（品牌渐变） -->
+  <rect width="32" height="32" rx="8" fill="url(#brand)" />
+
+  <!-- 对话气泡外形（白色） -->
+  <path
+    fill="#ffffff"
+    d="M16 6.5c-5.2 0-9.4 3.6-9.4 8 0 2.6 1.4 4.9 3.7 6.4v3.3c0 .5.6.7.9.4l3.3-2.6c.5.1 1 .1 1.5.1 5.2 0 9.4-3.6 9.4-8S21.2 6.5 16 6.5Z"
+  />
+
+  <!-- 气泡里三个点（品牌色） -->
+  <circle cx="11.8" cy="14.6" r="1.4" fill="#4d6bfe" />
+  <circle cx="16" cy="14.6" r="1.4" fill="#4d6bfe" />
+  <circle cx="20.2" cy="14.6" r="1.4" fill="#4d6bfe" />
+</svg>

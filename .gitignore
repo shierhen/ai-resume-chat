@@ -1,0 +1,21 @@
+node_modules
+dist
+dist-ssr
+*.local
+
+# 本地环境变量：绝对不要提交
+# ⚠️ 这里**不能**写 `!.env.local`：那是"反向规则"，会把含真实密钥的文件强行纳入
+#    版本控制，一次 git push 密钥就泄露了。只放行模板文件 .env.example。
+.env
+.env.*
+!.env.example
+
+# npm 本地缓存（见 .npmrc）
+.npm-cache
+
+# 编辑器 / 系统
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.log

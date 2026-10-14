@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <!--
+      站点图标。用 SVG（矢量、单文件、支持暗色标签栏），现代浏览器全部支持。
+      注意：这里**只声明 svg**，不要再写 `<link rel="icon" href="/favicon.ico">` ——
+      浏览器在找不到 favicon.ico 时会自动去请求它并留下一条 404 记录；
+      显式声明 svg 后浏览器就不会再去找 ico 了。
+      apple-touch-icon 是给 iOS「添加到主屏幕」用的，用同一张图即可。
+    -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <meta name="theme-color" content="#4d6bfe" />
+    <!--
+      viewport-fit=cover：让页面延伸到 iPhone 刘海/底部横条区域，
+      配合 CSS 的 env(safe-area-inset-*) 才能做出真正的"全面屏"布局。
+    -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="基于 Vue 3 + DeepSeek API 的 AI 问答应用" />
+    <title>AI 问答 · Vue 3 + DeepSeek</title>
+
+    <!--
+      【防主题闪烁的关键一步】
+      浏览器渲染首屏前会先执行这里的同步脚本。
+      如果不写它：页面会先用默认亮色画出来，Vue 挂载后才切成暗色 —— 用户会看到一瞬白闪。
+      这段脚本必须在 <body> 之前、且不能是 async/defer。
+    -->
+    <script>
+      ;(function () {
+        try {
+          var saved = localStorage.getItem('ai-chat:theme')
+          var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+          var theme = saved === 'dark' || saved === 'light' ? saved : prefersDark ? 'dark' : 'light'
+          if (theme === 'dark') document.documentElement.classList.add('dark')
+          document.documentElement.dataset.theme = theme
+        } catch (e) {
+          /* 隐私模式下 localStorage 可能抛错，忽略即可 */
+        }
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
