@@ -14,8 +14,21 @@
  * 【为什么返回 Response(ReadableStream) 而不是先攒完整再返回】
  * 流式的核心就是"边收边转发"。任何"等全部拿完再写"的中间缓冲都会毁掉流式。
  */
-import type { ApiMessage } from '../src/types/chat.ts'
-import { consumeSse, encodeSseJson } from '../src/utils/sse.ts'
+import { consumeSse, encodeSseJson } from './_sse.ts'
+
+/**
+ * 消息角色的类型。
+ *
+ * 【为什么在这里内联，而不是 import ../src/types/chat.ts】
+ * 与 _sse.ts 同样的原因：Vercel 打包函数时，`api/` 之外的相对引用（尤其带 .ts 扩展名）
+ * 会导致模块加载失败（FUNCTION_INVOCATION_FAILED）。
+ * 服务端只需要 role/content 这两个字段，内联三行类型最省事、也最稳。
+ */
+type ChatRole = 'system' | 'user' | 'assistant'
+interface ApiMessage {
+  role: ChatRole
+  content: string
+}
 
 /** 入参闸门：最多 50 条消息、单条最长 20 万字符 */
 const MAX_MESSAGES = 50

@@ -1,10 +1,20 @@
 /**
- * 极简 SSE（Server-Sent Events）解析器 / 封装器 —— 前后端共用一份。
+ * 极简 SSE（Server-Sent Events）解析器 / 封装器 —— **前端使用**
  *
  * 为什么"解析"和"封装"放同一个文件？
  * - 服务端要解析 DeepSeek 上游的 SSE，前端要解析我们服务端发出的 SSE，
  *   报文格式一模一样（data: 行 + 空行分隔事件），所以解析逻辑只需要一份；
  * - 封装（encodeSseJson）则是把对象变成 SSE 帧，供服务端回写给前端。
+ *
+ * ⚠️ 【重要：本文件与服务端存在一份"有意重复"的副本】
+ * `api/_sse.ts` 是本文件的**逐行相同副本**（仅注释不同），专门给 Serverless 函数用。
+ * 原因：Vercel 用 esbuild 打包函数时，`api/` 目录**向外**的相对引用（`../src/utils/sse.ts`，
+ * 尤其带 `.ts` 扩展名）无法解析，会导致线上 FUNCTION_INVOCATION_FAILED —— 这是真实踩过的坑。
+ * 所以函数的依赖闭包必须完全落在 `api/` 内。
+ *
+ * 【维护约定】修改 SSE 解析逻辑时，**两个文件都要改**：
+ *   - src/utils/sse.ts（前端 + scripts/test-sse.ts 单测覆盖）
+ *   - api/_sse.ts     （服务端 / Vercel 函数）
  *
  * 本文件是纯 TS，不依赖 window/DOM：浏览器与 Node 24 都能直接跑，
  * 这也是 scripts/test-sse.ts 能脱离浏览器做单测的原因。
