@@ -14,7 +14,7 @@
  * 【为什么返回 Response(ReadableStream) 而不是先攒完整再返回】
  * 流式的核心就是"边收边转发"。任何"等全部拿完再写"的中间缓冲都会毁掉流式。
  */
-import { consumeSse, encodeSseJson } from './_sse.ts'
+import { consumeSse, encodeSseJson } from './_sse.js'
 
 /**
  * 消息角色的类型。
