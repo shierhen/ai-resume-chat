@@ -1,8 +1,8 @@
 # AI 问答应用（Vue 3 + DeepSeek API）
 
-一个的 AI 问答 Web 应用：Vue 3 + TypeScript + Vite 前端，Vercel Serverless Function 做后端代理，流式接入 DeepSeek，支持日间/夜间主题与移动端适配。
+一个流式 AI 问答 Web 应用：Vue 3 + TypeScript + Vite 前端，Vercel Serverless Function 做后端代理，SSE 流式输出，支持日间/夜间主题与移动端适配。
 
-> 当前进度：**阶段 3 完成**（SSE 流式输出 + 逐字显示 + 停止生成，全链路已实测连通）。
+> **当前进度：阶段 1-5 全部完成**（已上线，`/api/chat` 流式链路线上实测通过）。
 
 ## 技术栈
 
@@ -11,42 +11,56 @@
 | 框架 | Vue 3.5（`<script setup>` + 组合式 API） | 组合式函数按功能组织逻辑 |
 | 语言 | TypeScript（strict） | 前后端共享类型定义 |
 | 构建 | Vite 8 | 秒级冷启动、HMR |
-| UI 库 | Element Plus 2.x | 按钮/提示/弹窗等基础件 + 暗色变量体系 |
+| UI 库 | Element Plus 2.x | **按需引入**（unplugin-vue-components） |
 | 样式 | 原生 CSS + CSS 变量 | 零额外依赖，主题切换靠变量重绑定 |
-| 后端 | Vercel Serverless Function（Node 运行时） | 保管 API Key、转发请求、SSE 流式返回 |
+| Markdown | marked + highlight.js（core 按需）+ DOMPurify | 渲染 + 高亮 + XSS 清洗 |
+| 后端 | Vercel Serverless Function（Node 运行时） | 保管 API Key、翻译 SSE、流式转发 |
 | 部署 | Vercel | 推 GitHub 自动部署，支持 Preview 环境 |
 
 ## 目录结构
 
 ```
 ai-resume-chat/
-├─ api/chat.ts              # Serverless Function：/api/chat（保管密钥、转发、收敛契约）
+├─ api/
+│  ├─ chat.ts               # Serverless Function：/api/chat（密钥保管 + SSE 翻译 + 取消联动）
+│  └─ _sse.ts               # 服务器专用 SSE 工具（被 chat.ts 以 './_sse.js' 引入，见下方说明）
 ├─ scripts/
-│  ├─ dev-api.ts            # 本地 API 适配层（模拟 vercel dev，把函数接到 HTTP，支持流式回写）
-│  ├─ test-sse.ts           # SSE 解析器单元测试（无需浏览器：node scripts/test-sse.ts）
-│  └─ mock-deepseek.mjs     # 模拟上游（非流式；有真密钥时用不到）
-├─ public/                  # 静态资源
+│  ├─ dev-api.ts            # 本地 API 适配层（模拟 vercel dev，支持流式回写）
+│  ├─ test-sse.ts           # SSE 解析器单元测试（node scripts/test-sse.ts，6 用例）
+│  ├─ mock-deepseek.mjs     # 模拟上游（无密钥也能跑通链路）
+│  └─ verify-prod.mjs       # 线上验收脚本（首页/资源/密钥泄漏/接口）
+├─ public/favicon.svg       # 站点图标
 ├─ src/
-│  ├─ components/           # 展示型组件：头部、消息列表、气泡、输入区、欢迎页
-│  ├─ composables/          # 组合式函数：useTheme（主题）、useChat（会话状态 + 流式消费）
+│  ├─ components/           # 展示型组件：头部、消息列表、气泡、输入区、欢迎页、Markdown 渲染
+│  ├─ composables/          # 组合式函数：useTheme（主题）、useChat（会话 + 流式消费）
+│  ├─ config/models.ts      # 可选模型清单（与服务端白名单对应）
 │  ├─ styles/               # tokens.css（设计变量）、base.css、element-overrides.css
-│  ├─ types/                # 全局类型定义 + 前后端 HTTP/事件契约
+│  ├─ types/chat.ts         # 全局类型定义 + 前后端事件契约
 │  ├─ utils/
-│  │  ├─ sse.ts             # ★ SSE 解析/封装（前后端共用一份：服务端解析上游、前端解析本服务）
+│  │  ├─ sse.ts             # ★ 前端 SSE 解析/封装（与 api/_sse.ts 逻辑一致，见下方说明）
+│  │  ├─ storage.ts         # localStorage 持久化（带版本号 + 容错 + 状态修正）
+│  │  ├─ markdown.ts        # marked + highlight.js + DOMPurify 安全渲染
 │  │  └─ format.ts          # 时间等小工具
 │  ├─ App.vue               # 根组件：布局 + 组装
-│  └─ main.ts               # 应用入口：创建实例、注册 UI 库与样式
-├─ index.html               # HTML 模板（含防主题闪烁脚本）
-├─ vite.config.ts           # Vite 配置（插件 + @ 别名 + /api 开发代理）
+│  └─ main.ts               # 应用入口
+├─ index.html               # HTML 模板（含防主题闪烁同步脚本）
+├─ vite.config.ts           # Vite 配置（插件 + @ 别名 + 按需引入 + /api 开发代理）
 └─ tsconfig.*.json          # TS 配置（app / node 分治）
 ```
+
+> ⚠️ **关于 SSE 工具的两份代码（重要设计约束）**
+> `src/utils/sse.ts`（前端）与 `api/_sse.ts`（服务端）是**有意重复**的两份实现。
+> 原因：Vercel 部署函数时，**函数的运行文件系统里只有 `api/` 目录**，项目里的 `src/` 不会一起带进去；
+> 而 ESM `import` 是**运行时解析**的，所以函数不能引用 `api/` 之外的任何文件（否则线上报
+> `ERR_MODULE_NOT_FOUND`）。
+> **修改 SSE 解析逻辑时，两个文件都要改。**
 
 ## 本地启动
 
 需要三个终端（或一个终端三个进程）：
 
 ```bash
-# 1. 安装依赖（Node 20+；npm / pnpm 均可，项目已含 .npmrc 与 pnpm-workspace.yaml）
+# 1. 安装依赖（Node 20+；项目用 npm，含 .npmrc 把缓存放进项目内）
 npm install
 
 # 2a. 本地 API 服务（加载 .env.local 里的密钥；监听 8787）
@@ -111,14 +125,14 @@ cp .env.example .env.local
 ## 架构
 
 ```
-浏览器（Vue 3 前端，5173）
+浏览器（Vue 3 前端，开发期 5173）
    │  fetch('/api/chat')  → 读 response.body 流（ReadableStream）
-   │  ← 开发期经 Vite proxy 转发到 8787；生产同域直连
+   │  ← 开发期经 Vite proxy 转发到 8787；生产环境同域直连（无 CORS）
    ▼
-Serverless Function（api/chat.ts，8787 / Vercel）
+Serverless Function（api/chat.ts，本地 8787 / 线上 Vercel）
    │  读 process.env.DEEPSEEK_API_KEY（前端不可见）
    │  fetch(上游 /chat/completions, { stream: true })   ← 上游 SSE 流
-   │  用 src/utils/sse.ts 解析 → 翻译成自己的极简事件流 → 边收边转发
+   │  用 ./_sse.js 解析 → 翻译成自己的极简事件流 → 边收边转发
    ▼
 上游模型 API
 ```
@@ -169,13 +183,82 @@ AI 输出属于不可信内容（可被提示注入诱导输出 `<script>`），
 2. `ElMessage` / `ElMessageBox` 这类函数式 API **不要手写 import**——手写后按需插件不再接管，
    会出现"弹窗能弹但完全没样式"。交给 `unplugin-auto-import` 自动引入。
 
+## 部署（Vercel）
+
+### 部署步骤
+
+1. 把仓库推到 GitHub
+2. https://vercel.com/new 导入该仓库（框架自动识别为 Vite，**无需 `vercel.json`**）
+3. 在 **Environment Variables** 配置 3 个变量，**Production / Preview / Development 三个环境都要勾**
+   （只勾 Production 会导致预览环境拿不到密钥而返回 500）
+4. 点 Deploy
+
+### 自动部署机制
+
+| 触发 | 结果 |
+| --- | --- |
+| 推送到 `main` | 自动构建 → 部署到 **Production**（固定域名） |
+| 推送到其它分支 / 开 PR | 自动生成 **Preview** 部署（独立随机域名），用于验收改动 |
+| 只改 README 等文档 | **同样会触发重新构建**——Vercel 看的是"有没有新提交"，不是"改了什么" |
+| 回滚 | Deployments → 选历史部署 → `Promote to Production` |
+
+> 如果希望"纯文档改动不触发部署"，可在 Settings → Git → Ignored Build Step 配置
+> `git diff --quiet HEAD^ HEAD -- . ':(exclude)*.md'`（本项目暂未启用）。
+
+### 🔐 线上安全边界（已实测验证）
+
+`DEEPSEEK_API_KEY` 不带 `VITE_` 前缀，Vite 不会把它注入前端产物。
+线上实测：抓取部署后的 JS 产物（423KB）搜索 `sk-` 与 `DEEPSEEK_API_KEY`，**均无匹配**。
+
+### 线上验收脚本
+
+```bash
+# 先把 scripts/verify-prod.mjs 里的 BASE 改成你的部署域名，然后：
+node scripts/verify-prod.mjs
+```
+
+覆盖 4 组共 10 项：首页可访问性、静态资源、**密钥泄漏检查**、接口健康（含真实流式请求与首字节延迟）。
+
+## 踩坑记录（真实故障 + 根因）
+
+### 1. 线上 `FUNCTION_INVOCATION_FAILED`：函数不能引用 `api/` 之外的文件
+
+```
+Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/var/task/src/utils/sse.ts'
+    imported from /var/task/api/chat.js
+```
+
+**根因**：Vercel 部署函数时，只把 `api/` 目录放进函数的运行文件系统（`/var/task/api/…`），
+`src/` 不会一起带进去；而 ESM `import` 是**运行时解析**的，于是找不到模块。
+本地能跑，是因为本地有完整项目目录（且 Node 24 原生支持直接运行 `.ts`）。
+
+**解法**（本项目采用）：在 `api/` 内放置自包含副本，并**把 import 扩展名写成 `.js`**：
+
+```ts
+import { consumeSse, encodeSseJson } from './_sse.js'   // ← 写 .js，不是 .ts
+```
+
+因为 Vercel 会把 `api/_sse.ts` 转译成 `api/_sse.js` 放在同目录，运行时即可解析到。
+
+### 2. 推理模型的增量字段不是 `content`
+
+思考链增量在某些厂商是 `delta.reasoning`，某些是 `delta.reasoning_content`。
+只解析 `delta.content` 会导致**整段输出丢失、界面空白**（实测踩过）。
+代码用 `delta.reasoning ?? delta.reasoning_content` 双字段兜底。
+
+### 3. 流的 `cancel()` 里不能取消已锁定的流
+
+客户端断开时若执行 `upstreamBody.cancel()`，会抛 `ERR_INVALID_STATE: ReadableStream is locked`
+（该流已被 `consumeSse` 的 reader 锁定）；异常发生在取消回调里会变成未捕获拒绝，**直接把 Node 进程带崩**。
+正确做法：`upstreamController.abort()`，让进行中的 `read()` 以 `AbortError` 结束，由 `finally` 释放锁。
+
 ## 开发阶段
 
 - [x] 阶段 1：项目初始化 + 静态聊天界面 + 主题切换 + 响应式基础
 - [x] 阶段 2：Vercel Serverless 代理 + DeepSeek 非流式调用（fetch 实现）
 - [x] 阶段 3：SSE 流式输出（逐字显示 + 停止生成 + 思考链兼容）
 - [x] 阶段 4：多轮上下文 + localStorage 持久化 + Markdown 渲染 + 错误重试 + 模型切换 + 按需引入优化
-- [ ] 阶段 5：部署到 Vercel + README 完善 
+- [x] 阶段 5：部署到 Vercel + 线上验收 + README 完善
 
 ## License
 
